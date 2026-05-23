@@ -1,0 +1,28 @@
+# ── Build output ─────────────────────────────────────────────
+build/classes/
+build/sources.txt
+
+# ── Compiled plugin ──────────────────────────────────────────
+dist/
+
+# ── Server runtime files (not source) ────────────────────────
+logs/
+cache/
+versions/
+plugins/
+libs/
+libs-other/
+libraries/
+
+# ── Minecraft server config (auto-generated) ─────────────────
+bukkit.yml
+commands.yml
+server.properties
+eula.txt
+
+# ── OS / IDE ─────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.iml
+.idea/
+.vscode/

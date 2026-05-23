@@ -1,0 +1,20 @@
+name: BogatirOrbitalStrike
+version: 1.0.0
+main: me.bogatir.orbitalstrike.BogatirOrbitalStrike
+api-version: '26.1'
+author: Bogatir
+description: Orbital laser strike system with cinematic visuals and Fear effect
+
+commands:
+  orbitalstrike:
+    description: Orbital Strike commands
+    usage: /orbitalstrike give [player]
+    aliases: [os, orbital]
+
+permissions:
+  orbitalstrike.use:
+    description: Allows right-clicking and using the Orbital Strike block
+    default: op
+  orbitalstrike.give:
+    description: Allows giving the Orbital Strike block to players
+    default: op
