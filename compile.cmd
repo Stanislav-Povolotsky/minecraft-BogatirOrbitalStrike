@@ -47,7 +47,8 @@ for /f "tokens=*" %%v in ('"%JAVAC_EXE%" -version 2^>^&1') do set JAVA_VER_STR=%
 echo [INFO]  Compiler: %JAVA_VER_STR%
 
 :: ── 2. Verify Paper API jar ──────────────────────────────────
-if not exist "%PAPER_JAR%" (
+if not exist "%API_JAR%" (
+  if not exist "%PAPER_JAR%" (
     echo.
     echo [ERROR] Paper jar not found at: %PAPER_JAR%
     echo.
@@ -59,6 +60,7 @@ if not exist "%PAPER_JAR%" (
     echo   4. Place it in the  libs\  folder
     echo.
     pause & exit /b 1
+  )
 )
 
 :: ── 2b. Verify the real API jar exists ──────────────────────

@@ -38,12 +38,8 @@ public class GUIListener implements Listener {
         if (data == null) return;
 
         switch (slot) {
-            case OrbitalStrikeGUI.SLOT_X ->
-                promptDouble(player, "Enter target §cX§f coordinate:", "x");
-            case OrbitalStrikeGUI.SLOT_Y ->
-                promptDouble(player, "Enter target §aY§f coordinate:", "y");
-            case OrbitalStrikeGUI.SLOT_Z ->
-                promptDouble(player, "Enter target §9Z§f coordinate:", "z");
+            case OrbitalStrikeGUI.SLOT_COORDS ->
+                promptCoords(player);
             case OrbitalStrikeGUI.SLOT_DELAY ->
                 promptInt(player, "Enter §edelay§f in ticks §7(20 = 1 second)§f:", "delay", 1, Integer.MAX_VALUE);
             case OrbitalStrikeGUI.SLOT_POWER ->
@@ -69,16 +65,29 @@ public class GUIListener implements Listener {
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
 
-    private void promptDouble(Player player, String prompt, String field) {
+    private void promptCoords(Player player) {
         player.closeInventory();
-        player.sendMessage("§f" + prompt + "  §8(type §7cancel§8 to abort)");
+        player.sendMessage("§fВведи координаты §cX §aY §9Z §8через пробел или §7;§8:");
+        player.sendMessage("§8Пример: §f-6 83 44  §8или  §f-6;83;44  §8(§7cancel§8 — отмена)");
 
         plugin.getChatInputListener().expectInput(player, raw -> {
+            // split on semicolons or whitespace
+            String[] parts = raw.trim().split("[;\\s]+");
+            if (parts.length != 3) {
+                player.sendMessage("§cНужно три числа, получено: §f" + parts.length + "§c. Попробуй ещё раз.");
+                plugin.getStrikeManager().getGUI().open(player, null);
+                return;
+            }
             try {
-                double value = Double.parseDouble(raw);
-                applyField(player, field, value);
+                double x = Double.parseDouble(parts[0]);
+                double y = Double.parseDouble(parts[1]);
+                double z = Double.parseDouble(parts[2]);
+                StrikeData data = plugin.getStrikeManager().getGUI().getData(player);
+                if (data != null) { data.setX(x); data.setY(y); data.setZ(z); }
+                player.sendMessage("§aКоординаты установлены: §f" +
+                    String.format("%.0f, %.0f, %.0f", x, y, z));
             } catch (NumberFormatException ex) {
-                player.sendMessage("§cInvalid number: §f" + raw);
+                player.sendMessage("§cНеверный формат числа: §f" + raw);
             }
             plugin.getStrikeManager().getGUI().open(player, null);
         });
@@ -108,9 +117,6 @@ public class GUIListener implements Listener {
         if (data == null) return;
 
         switch (field) {
-            case "x"            -> data.setX(value);
-            case "y"            -> data.setY(value);
-            case "z"            -> data.setZ(value);
             case "delay"        -> data.setDelayTicks((int) value);
             case "power"        -> data.setPower((int) value);
             case "count"        -> data.setCount((int) value);

@@ -12,7 +12,7 @@ versions/
 plugins/
 libs/
 libs-other/
-libraries/
+--libraries/
 
 # ── Minecraft server config (auto-generated) ─────────────────
 bukkit.yml

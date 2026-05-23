@@ -88,7 +88,7 @@ public class LaserRenderer {
     public void spawnImpactBurst(World world, Location target) {
         world.spawnParticle(Particle.END_ROD,       target, 60, 3.0, 3.0, 3.0, 0.3);
         world.spawnParticle(Particle.LAVA,           target, 80, 4.0, 4.0, 4.0, 0.8);
-        world.spawnParticle(Particle.FLASH,          target, 5,  2.0, 2.0, 2.0, 0);
+        world.spawnParticle(Particle.FLASH,          target, 5,  2.0, 2.0, 2.0, 0, Color.WHITE);
         world.spawnParticle(Particle.EXPLOSION,      target, 10, 2.0, 2.0, 2.0, 0);
     }
 

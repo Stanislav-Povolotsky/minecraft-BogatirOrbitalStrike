@@ -7,8 +7,11 @@ import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Vector;
 
 import java.util.Random;
 
@@ -137,36 +140,83 @@ public class StrikeTask extends BukkitRunnable {
     // ─── Impact logic ──────────────────────────────────────────────────────────
 
     private void executeImpact(World world, Location target) {
-        // Explosion — power scales 2f (p=1) to 20f (p=10)
-        float explosionPower = data.getPower() * 2.0f;
-        world.createExplosion(target, explosionPower, /* setFire */ true, /* breakBlocks */ true);
+        int power = data.getPower();
 
-        // Extra fire spreading in a circle around the impact
-        int fireRadius = data.getPower();
+        // ── 1. Visual explosion + sound (purely cosmetic, breakBlocks=false
+        //       so server config / mobGriefing cannot suppress our damage) ──────
+        world.createExplosion(target, power * 2.0f, false, false);
+
+        // ── 2. Manually break blocks in a sphere (radius scales with power) ────
+        //    Radius: power 1 → 3 blocks, power 10 → 15 blocks
+        int radius = 1 + (int) Math.round(power * 1.4);
+        int radiusSq = radius * radius;
+
+        int cx = target.getBlockX();
+        int cy = target.getBlockY();
+        int cz = target.getBlockZ();
+
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    if (dx*dx + dy*dy + dz*dz > radiusSq) continue;
+
+                    Block block = world.getBlockAt(cx + dx, cy + dy, cz + dz);
+                    Material mat = block.getType();
+
+                    if (mat == Material.AIR
+                            || mat == Material.VOID_AIR
+                            || mat == Material.CAVE_AIR
+                            || mat == Material.BEDROCK) continue;
+
+                    // Distance factor: blocks closer to centre break more reliably
+                    double dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+                    double breakChance = 1.0 - (dist / (radius + 1)) * 0.5;
+                    if (random.nextDouble() > breakChance) continue;
+
+                    // Use setType(AIR) — bypasses BlockBreakEvent, WorldGuard,
+                    // spawn-protection and any other server-side block protection.
+                    // Drop items manually so loot isn't lost.
+                    block.breakNaturally();
+                    block.setType(Material.AIR);
+                }
+            }
+        }
+
+        // ── 3. Fire spreading ring around crater ─────────────────────────────
+        int fireRadius = power * 3;
         for (int dx = -fireRadius; dx <= fireRadius; dx++) {
             for (int dz = -fireRadius; dz <= fireRadius; dz++) {
-                if (dx * dx + dz * dz > fireRadius * fireRadius) continue;
-                if (random.nextFloat() > 0.35f) continue;
+                if (dx*dx + dz*dz > fireRadius*fireRadius) continue;
+                if (random.nextFloat() > 0.85f) continue;
 
-                Block candidate = world.getBlockAt(
-                    (int) target.getX() + dx,
-                    (int) target.getY() + 1,
-                    (int) target.getZ() + dz
-                );
-                if (candidate.getType() == Material.AIR) {
+                // Try to place fire on the exposed top surface of any solid block
+                for (int dy = radius; dy >= -radius - 2; dy--) {
+                    Block candidate = world.getBlockAt(cx + dx, cy + dy, cz + dz);
+                    if (candidate.getType() != Material.AIR) break;
                     Block below = candidate.getRelative(0, -1, 0);
-                    // Only ignite if there's a solid block beneath
-                    if (below.getType().isSolid()) {
+                    if (below.getType().isSolid() && below.getType() != Material.BEDROCK) {
                         candidate.setType(Material.FIRE);
+                        break;
                     }
                 }
             }
         }
 
-        // Sounds
-        world.playSound(target, Sound.ENTITY_LIGHTNING_BOLT_THUNDER,   10.0f, 0.5f);
-        world.playSound(target, Sound.ENTITY_LIGHTNING_BOLT_IMPACT,      8.0f, 0.7f);
-        world.playSound(target, Sound.BLOCK_BEACON_DEACTIVATE,           6.0f, 0.3f);
+        // ── 4. Knockback nearby entities ──────────────────────────────────────
+        double knockbackRadius = radius * 2.5;
+        for (Entity entity : world.getNearbyEntities(target, knockbackRadius, knockbackRadius, knockbackRadius)) {
+            if (!(entity instanceof LivingEntity)) continue;
+            Vector dir = entity.getLocation().toVector().subtract(target.toVector());
+            double dist = dir.length();
+            if (dist < 0.1) dist = 0.1;
+            double strength = (knockbackRadius - dist) / knockbackRadius * power * 0.5;
+            entity.setVelocity(dir.normalize().multiply(strength).add(new Vector(0, strength * 0.4, 0)));
+        }
+
+        // ── 5. Sounds ─────────────────────────────────────────────────────────
+        world.playSound(target, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, 10.0f, 0.5f);
+        world.playSound(target, Sound.ENTITY_LIGHTNING_BOLT_IMPACT,   8.0f, 0.7f);
+        world.playSound(target, Sound.BLOCK_BEACON_DEACTIVATE,        6.0f, 0.3f);
     }
 
     // ─── Utility ───────────────────────────────────────────────────────────────

@@ -33,9 +33,7 @@ import java.util.UUID;
 public class OrbitalStrikeGUI {
 
     // ─── Slot constants ────────────────────────────────────────────────────────
-    public static final int SLOT_X             = 10;
-    public static final int SLOT_Y             = 12;
-    public static final int SLOT_Z             = 14;
+    public static final int SLOT_COORDS        = 12;   // centre of row 1
     public static final int SLOT_DELAY         = 16;
     public static final int SLOT_POWER         = 28;
     public static final int SLOT_COUNT         = 30;
@@ -89,15 +87,10 @@ public class OrbitalStrikeGUI {
         for (int i = 0; i < 54; i++) inv.setItem(i, glass);
 
         // ── Coordinate inputs ──────────────────────────────────────────────────
-        inv.setItem(SLOT_X, makeInput(Material.RED_DYE,    "§cTarget X",
-            String.format("%.1f", data.getX()),
-            "§7Click → type in chat"));
-        inv.setItem(SLOT_Y, makeInput(Material.LIME_DYE,   "§aTarget Y",
-            String.format("%.1f", data.getY()),
-            "§7Click → type in chat"));
-        inv.setItem(SLOT_Z, makeInput(Material.BLUE_DYE,   "§9Target Z",
-            String.format("%.1f", data.getZ()),
-            "§7Click → type in chat"));
+        inv.setItem(SLOT_COORDS, makeInput(Material.COMPASS, "§bTarget Coordinates",
+            String.format("§c%.0f §8| §a%.0f §8| §9%.0f", data.getX(), data.getY(), data.getZ()),
+            "§7Click → введи: §fX Y Z  §8или  §fX;Y;Z",
+            "§8Пример: §f-6 83 44  §8или  §f-6;83;44"));
         inv.setItem(SLOT_DELAY, makeInput(Material.CLOCK,  "§eDelay",
             data.getDelayTicks() + " ticks  §8(" + String.format("%.1f", data.getDelayTicks() / 20.0) + "s§8)",
             "§7Click → type in chat",
